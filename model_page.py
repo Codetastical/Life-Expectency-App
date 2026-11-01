@@ -95,17 +95,24 @@ class menu:
 
         st.success("Prediction saved to SQLite!")
 
-    def delete_prediction(self):
-        if btn_3:
-            print(f"All index choices 0-{len(self.model_prediction)}")
-            rm_idx = int(
-                st.number_input("Input what idx do you want to remove from data row?")
-            )
-            self.conn_data.execute("DELTE FROM data_used_pred WHERE id = ?", (rm_idx,))
-            self.conn.execute("DELETE FROM predictions WHERE id = ?", (rm_idx,))
-            self.conn.commit()
+    def delete_prediction(self, rm_idx):
 
-            st.write("Deleted Prediction from .db")
+        # rm_idx = self.current_prediction_idx
+
+        with sqlite3.connect("data_used_pred.db") as conn_data:
+            result_data = conn_data.execute(
+                "DELETE FROM data_used_pred WHERE id = ?", (rm_idx,)
+            )
+
+        with sqlite3.connect("predictions.db") as conn:
+            result_pred = conn.execute(
+                "DELETE FROM predictions WHERE id = ?", (rm_idx,)
+            )
+
+        if result_data.rowcount == 0 and result_pred.rowcount == 0:
+            st.warning(f"No records found with ID {rm_idx}")
+        else:
+            st.success(f"Deletion completed for ID {rm_idx}")
 
 
 if "menu" not in st.session_state:
@@ -119,5 +126,6 @@ if btn:
 if btn_2:
     Menu.save_prediction()
 
+rm_idx = int(st.number_input("remove this index"))
 if btn_3:
-    Menu.delete_prediction()
+    Menu.delete_prediction(rm_idx)
