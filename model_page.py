@@ -5,8 +5,7 @@ import sqlite3
 
 # Load the trained neural network
 model = joblib.load("life_expectancy_nn.joblib")
-conn_data = sqlite3.connect("data_used_pred.db")
-conn = sqlite3.connect("predictions.db")
+
 
 st.title("Model Page")
 param_1 = st.text_input("country?:")
@@ -22,62 +21,78 @@ btn_3 = st.button("remove prediction from .db", width="stretch", icon_position="
 
 class menu:
     def __init__(self):
+
+        self.conn_data = sqlite3.connect("data_used_pred.db")
+        self.conn = sqlite3.connect("predictions.db")
+
         self.dict_data = []
+        # self.true_data = []
         self.dict_data_idx = 0
 
         self.model_prediction = []
         self.current_prediction_idx = 0
 
     def model_predict(self):
-        if btn:
-            data = pd.DataFrame(
-                [
-                    {
-                        "country": param_1,
-                        "continent": param_2,
-                        "year": param_3,
-                        "gdpPercap": param_4,
-                        "pop": param_5,
-                    }
-                ]
-            )
-            self.dict_data.append(data)
-            self.dict_data_idx += 1
-            self.model_prediction.append(model.predict(data))
-            self.current_prediction_idx += 1
-            st.write(model.predict(data))
+        self.data = pd.DataFrame(
+            [
+                {
+                    "country": param_1,
+                    "continent": param_2,
+                    "year": param_3,
+                    "gdpPercap": param_4,
+                    "pop": param_5,
+                }
+            ]
+        )
+        self.dict_data.append(self.data)
+        self.dict_data_idx += 1
+        self.model_prediction.append(model.predict(self.data))
+        self.current_prediction_idx += 1
+        st.write(
+            f"predicted lifespan: {model.predict(self.data)}, idx: {self.dict_data}"
+        )
 
     def save_prediction(self):
-        with btn_2:
-            for dic_item in self.dict_data[self.dict_data_idx]:
-                conn_data.execute(
-                    f"INSERT INTO predictions ({dic_item.key}) VALUES (?)",
-                    (f"{dic_item.item}"),
-                )
-            conn_data.commit()
-            conn.execute(
+        st.write(self.dict_data)
+        if btn_2:
+            for dic_item in self.dict_data:
+                for df in dic_item:
+                    for name in df.columns:
+                        self.conn_data.execute(
+                            f"INSERT INTO predictions ({name}) VALUES (?)",
+                            (df[name]),
+                        )
+            self.conn_data.commit()
+            self.conn.execute(
                 "INSERT INTO predictions (life_expectancy_pred) VALUES (?)",
-                (f"{self.model_prediction[self.current_prediction_idx - 1]}"),
+                (self.model_prediction[self.current_prediction_idx - 1],),
             )
-            conn.commit()
+            self.conn.commit()
 
-            st.write("Saved Prediction! from .db")
+            st.write(f"Saved Prediction: {self.dict_data} to .db")
 
     def delete_prediction(self):
         if btn_3:
             print(f"All index choices 0-{len(self.model_prediction)}")
-            rm_idx = int(input("Input what idx do you want to remove from data row?"))
-            conn_data.execute("DELTE FROM data_used_pred WHERE id = ?", (rm_idx,))
-            conn.execute("DELETE FROM predictions WHERE id = ?", (rm_idx,))
-            conn.commit()
+            rm_idx = int(
+                st.number_input("Input what idx do you want to remove from data row?")
+            )
+            self.conn_data.execute("DELTE FROM data_used_pred WHERE id = ?", (rm_idx,))
+            self.conn.execute("DELETE FROM predictions WHERE id = ?", (rm_idx,))
+            self.conn.commit()
 
             st.write("Deleted Prediction from .db")
 
 
-Menu = menu()
+if "menu" not in st.session_state:
+    st.session_state["menu"] = menu()
+
+Menu = st.session_state["menu"]
 
 if btn:
     Menu.model_predict()
 
 if btn_2:
-    Menu
+    Menu.save_prediction()
+if btn_3:
+    Menu.delete_prediction()
