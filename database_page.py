@@ -10,7 +10,7 @@ prediction = mp.model_prediction
 conn_data = sqlite3.connect("data_used_pred.db")
 
 conn_data.execute("""
-    CREATE TABLE IF NOT EXISTS predictions (
+    CREATE TABLE IF NOT EXISTS data_used_pred (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         country TEXT,
         continent TEXT,
