@@ -1,6 +1,7 @@
 import streamlit as st
 import joblib
 import pandas as pd
+import sqlite3
 
 # Load the trained neural network
 model = joblib.load("life_expectancy_nn.joblib")
@@ -13,8 +14,12 @@ param_3 = st.number_input("year?: ")
 param_4 = st.number_input("gdpPercap?: ")
 param_5 = st.number_input("population?: ")
 
-btn = st.button("enter parameters")
+btn = st.button("enter parameters", width=1.0)
+btn_2 = st.button("save prediction to .db", width=0.5)
+btn_3 = st.button("remove prediction from .db", width=0.5)
 model_prediction = []
+current_prediction_idx = 0
+conn = sqlite3.connect("predictions.db")
 
 
 class menu:
@@ -39,7 +44,14 @@ class menu:
                 ]
             )
             model_prediction.append(model(data))
+            current_prediction_idx += 1
             st.write_stream(model(data))
+
+    def save_prediction():
+        conn.execute(
+            f"INSERT INTO predictions (life_expectancy) VALUES (?)",
+            ("Sweden", 2007, 82.4),
+        )
 
     def save_prediction():
         pass
