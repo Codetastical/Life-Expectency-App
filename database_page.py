@@ -1,11 +1,16 @@
 import model_page as mp
+from model_page import menu
 import sqlite3
 import streamlit as st
 import pandas as pd
 
 st.title("Database Page")
 
-prediction = mp.model_prediction
+if "menu" in st.session_state:
+    Menu = st.session_state["menu"]
+    prediction = Menu.model_prediction
+else:
+    st.warning("Make model predcition first")
 
 conn_data = sqlite3.connect("data_used_pred.db")
 
@@ -31,8 +36,11 @@ conn.execute("""
 """)
 
 df_data_u_pred = pd.read_sql_query("SELECT * FROM data_used_pred", conn_data)
+
+print(df_data_u_pred)
 conn_data.close()
 df_pred = pd.read_sql_query("SELECT * FROM predictions", conn)
+print(df_pred)
 conn.close()
 
 inputed_database = st.button("show_inputed_predict_database")

@@ -22,11 +22,7 @@ btn_3 = st.button("remove prediction from .db", width="stretch", icon_position="
 class menu:
     def __init__(self):
 
-        self.conn_data = sqlite3.connect("data_used_pred.db")
-        self.conn = sqlite3.connect("predictions.db")
-
         self.dict_data = []
-        # self.true_data = []
         self.dict_data_idx = 0
 
         self.model_prediction = []
@@ -53,23 +49,51 @@ class menu:
         )
 
     def save_prediction(self):
-        st.write(self.dict_data)
-        if btn_2:
-            for dic_item in self.dict_data:
-                for df in dic_item:
-                    for name in df.columns:
-                        self.conn_data.execute(
-                            f"INSERT INTO predictions ({name}) VALUES (?)",
-                            (df[name]),
-                        )
-            self.conn_data.commit()
-            self.conn.execute(
-                "INSERT INTO predictions (life_expectancy_pred) VALUES (?)",
-                (self.model_prediction[self.current_prediction_idx - 1],),
-            )
-            self.conn.commit()
 
-            st.write(f"Saved Prediction: {self.dict_data} to .db")
+        self.conn_data = sqlite3.connect("data_used_pred.db")
+        self.conn = sqlite3.connect("predictions.db")
+
+        if not self.dict_data or not self.model_prediction:
+            st.warning("Make a prediction first!")
+            return
+        # Get the latest stored DataFrame
+        df = self.dict_data[-1]
+
+        # Get the first row from that DataFrame
+        row = df.iloc[0]
+
+        # Save all input features as ONE SQL record
+        self.conn_data.execute(
+            """
+            INSERT INTO data_used_pred
+            (country, continent, year, gdpPercap, pop)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                str(row["country"]),
+                str(row["continent"]),
+                int(row["year"]),
+                float(row["gdpPercap"]),
+                float(row["pop"]),
+            ),
+        )
+
+        self.conn_data.commit()
+
+        # Extract the numerical model prediction
+        prediction = float(self.model_prediction[-1][0])
+
+        self.conn.execute(
+            """
+            INSERT INTO predictions (life_expectancy_pred)
+            VALUES (?)
+            """,
+            (prediction,),
+        )
+
+        self.conn.commit()
+
+        st.success("Prediction saved to SQLite!")
 
     def delete_prediction(self):
         if btn_3:
@@ -94,5 +118,6 @@ if btn:
 
 if btn_2:
     Menu.save_prediction()
+
 if btn_3:
     Menu.delete_prediction()
