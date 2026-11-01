@@ -49,8 +49,8 @@ class menu:
 
     def save_prediction():
         conn.execute(
-            f"INSERT INTO predictions (life_expectancy) VALUES (?)",
-            ("Sweden", 2007, 82.4),
+            f"INSERT INTO predictions (life_expectancy_pred) VALUES (?)",
+            (f"{model_prediction[current_prediction_idx]}"),
         )
 
     def save_prediction():

@@ -7,9 +7,20 @@ st.title("Database Page")
 
 prediction = mp.model_prediction
 
-conn_zero = sqlite3.connect("data_used_pred.db")
+conn_data = sqlite3.connect("data_used_pred.db")
 
-conn_zero
+conn_data.execute("""
+    CREATE TABLE IF NOT EXISTS predictions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        country TEXT,
+        continent TEXT,
+        year INTEGER,
+        gdpPercap REAL,
+        pop REAL
+    )
+""")
+
+
 conn = sqlite3.connect("predictions.db")
 
 conn.execute("""
